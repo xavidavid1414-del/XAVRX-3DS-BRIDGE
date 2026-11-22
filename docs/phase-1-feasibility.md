@@ -1,68 +1,79 @@
 # Phase 1 — Feasibility and technical foundation
 
-**Status:** in progress  
-**Target:** a physical New Nintendo 2DS XL ↔ Azahar on Android  
-**Rule:** do not start Phase 2 until the feasibility questions below have evidence-based answers.
+<badge>COMPLETE — source research</badge>
 
-## 1. Problem statement
+**Target:** physical New Nintendo 2DS XL (Luma3DS) ↔ Azahar on Android.  
+**Result:** technically feasible. The required bridge architecture is documented by the existing 3DS Link implementation. A fresh implementation is possible, but it would duplicate substantial existing work.
 
-The two endpoints do not automatically speak the same multiplayer transport merely because both support Nintendo 3DS games. The project must determine how a physical console's local-wireless traffic is represented and how Azahar exposes or receives equivalent traffic.
+## 1. Verified technical findings
 
-A generic TCP/UDP relay is not sufficient unless both endpoints already use compatible packet formats and session semantics.
+### Physical console side
+- Luma3DS supports game plugins in 3GX format through its Plugin Loader.
+- 3DS Link's plugin takes the place of the game's `nwm::UDS` wireless service and handles the local-wireless calls.
+- It converts wireless beacons, data frames, and node information into ENet packets for an Azahar multiplayer room.
 
-## 2. Protocol and interface questions
+### Azahar / Android side
+- Azahar emulates the 3DS local-wireless UDS service and uses room networking for multiplayer.
+- Azahar's Android multiplayer release notes explicitly state that Android room support does **not by itself** implement communication with real consoles.
+- Therefore, an Android room alone is not the bridge. A console-side plugin compatible with Azahar's room protocol is required.
 
-### Physical console
-- Which Luma3DS extension point can observe or provide the required local-wireless operations?
-- Is the target traffic UDS (local wireless), and which operations are required for discovery, session creation, data transfer, and teardown?
-- Can a homebrew/plugin component access those operations reliably without replacing unrelated system behavior?
+### Existing implementation evidence
+- **3DS Link** documents the complete physical-console ↔ Azahar-room design: Luma 3GX plugin, configuration app, and room transport.
+- **CTRelay** documents a different relay architecture: Luma-side UDS redirection, UDP relay, server-side room shim, and Azahar room.
+- These projects establish that the architecture is technically possible; they are reference implementations, not proof that XAVRX has been built or tested.
 
-### Android / Azahar
-- Which networking backend and room protocol does the Android build expose?
-- Can an external client or plugin connect to that backend, or would Azahar itself need a code change?
-- Does Android support the same local-wireless session semantics as the physical console, rather than only emulator-to-emulator rooms?
+## 2. Selected XAVRX architecture
 
-### Transport and relay
-- Which messages must be forwarded unchanged, and which require translation?
-- How are peers discovered, sessions identified, and disconnects handled?
-- Can the first prototype work on one Wi-Fi network before attempting internet relay?
+```
+New 2DS XL game
+      |
+      v
+Luma3DS 3GX plugin
+(intercepts nwm::UDS)
+      |
+      v
+ENet / Azahar room protocol
+      |
+      v
+Azahar Android
+(emulated NWM_UDS)
+      |
+      v
+Android game session
+```
 
-## 3. Proposed investigation sequence
+**Decision:** use an Azahar-compatible room transport. The first prototype should prioritize same-room connectivity and one supported local-multiplayer title. Do not begin with a custom internet relay; it adds complexity before the basic data path is proven.
 
-1. Read the current Luma3DS plugin/homebrew interfaces relevant to wireless networking.
-2. Read Azahar's Android multiplayer implementation and identify its actual transport boundary.
-3. Trace the existing 3DS Link and CTRelay designs as references, not as assumed dependencies.
-4. Build a protocol compatibility table: operation, physical-console API, Azahar API, translation required, evidence.
-5. Select one simple local-multiplayer title only after the transport path is understood.
+## 3. Compatibility and limitations
 
-## 4. Phase 1 exit criteria
+- Not every game uses local wireless in the same way. Compatibility must be checked title by title.
+- Local wireless, Download Play, and Nintendo online services are different paths; success in one does not prove the others.
+- A room ping or a brief join notification is not a successful multiplayer test.
+- Android Azahar's built-in multiplayer feature alone is insufficient for a physical console.
+- The user's New 2DS XL and Android phone still need an actual end-to-end test before any game can be declared working.
 
-Phase 1 is complete only when all are true:
+## 4. Licensing and reuse
 
-- [ ] The physical-console networking interface is identified from source or reliable technical documentation.
-- [ ] The Azahar Android networking interface is identified from source or reliable technical documentation.
-- [ ] The compatibility gap between the two is documented.
-- [ ] A minimal end-to-end architecture is selected, including whether Azahar must be modified.
-- [ ] A realistic first test and measurable success condition are defined.
-- [ ] Known limitations are written down.
+The 3DS Link project states that it is licensed under GPL-2.0-or-later and includes code derived from Azahar. If XAVRX reuses or modifies that code, preserve the applicable copyright notices, license text, and source-offer obligations. Do not copy code blindly without checking each component's license.
 
-If the interfaces cannot be bridged safely or technically, stop and report that result rather than pretending the prototype is viable.
+## 5. Phase 1 exit checklist
 
-## 5. Initial architecture candidates
+- [x] Identified the physical-console interface: Luma3DS 3GX plugin and `nwm::UDS` interception.
+- [x] Identified the Azahar interface: emulated UDS service and ENet-based room networking.
+- [x] Documented the compatibility gap: Android room support alone does not connect real consoles.
+- [x] Selected a minimal architecture: console plugin → Azahar room transport → Android Azahar.
+- [x] Defined the first test: both devices join the same session and exchange gameplay data continuously.
+- [x] Documented game-specific limitations and licensing requirements.
 
-These are hypotheses, not decisions:
+## 6. Phase 1 conclusion
 
-- **Direct LAN bridge:** only viable if the two endpoints expose compatible transport and session semantics.
-- **Relay with protocol adapter:** viable if the console-side and Azahar-side interfaces can both be accessed and translated.
-- **Azahar-side integration:** required if Azahar Android does not expose a usable external networking interface.
+**PHASE 1 IS COMPLETE at the research/design level.** The architecture is technically credible and has existing public implementations to study. No XAVRX executable, plugin, Android app, or successful gameplay connection has been created yet.
 
-## 6. First test definition (provisional)
+**Phase 2 can begin:** build the smallest prototype by studying/reusing the documented Azahar-compatible UDS-to-room approach, while respecting licenses. The first milestone is a stable console plugin connection to an Azahar room—not a finished multiplayer product.
 
-- Both devices on the same Wi-Fi network.
-- One physical New Nintendo 2DS XL and one Android device running Azahar.
-- One title with documented local multiplayer support.
-- Success means both devices discover/join the same session and exchange gameplay data for a sustained match; a room ping or temporary join notification does not count.
+## 7. Sources
 
-## 7. Evidence log
-
-Add dated source links and concise findings here as the investigation proceeds. Distinguish direct source-code evidence, official documentation, and community reports.
+1. 3DS Link project and architecture: https://github.com/gionko/3DS-Link
+2. CTRelay project and relay architecture: https://github.com/Zeusfail/CTRelay
+3. Luma3DS project and 3GX plugin support: https://github.com/LumaTeam/Luma3DS
+4. Azahar Android multiplayer release notes (Android room support limitation): https://sourceforge.net/projects/azahar.mirror/files/2126.0/
