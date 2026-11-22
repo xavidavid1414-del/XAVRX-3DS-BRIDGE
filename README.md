@@ -1,55 +1,26 @@
 # XAVRX-3DS-BRIDGE
 
-A research and development project exploring multiplayer connectivity between a **real Nintendo 3DS-family console** (New Nintendo 2DS XL with Luma3DS) and **Azahar on Android**.
+A research and development project for multiplayer connectivity between a **physical New Nintendo 2DS XL running Luma3DS** and **Azahar on Android**.
 
 ## Goal
+Connect a real 3DS-family console with an Android Azahar instance in the same local-wireless game session. This is not an emulator-to-emulator project.
 
-Investigate whether a standalone bridge can make compatible local-wireless multiplayer sessions work between:
-- a physical New Nintendo 2DS XL; and
-- an Android phone running Azahar.
+## Three phases
+1. **Phase 1 — Feasibility and foundation: COMPLETE.** Research established a technically credible architecture based on a Luma3DS 3GX plugin intercepting `nwm::UDS` and forwarding compatible packets through an Azahar room.
+2. **Phase 2 — Connection prototype: NEXT.** Build the smallest console-side plugin / room-connection prototype, respecting upstream licenses.
+3. **Phase 3 — Validation.** Test a real game on the physical New 2DS XL and Android Azahar; publish only verified compatibility results.
 
-This project is specifically **not** an emulator-to-emulator networking tool.
+## Important facts
+- Azahar Android multiplayer rooms do not by themselves connect real consoles.
+- A console-side Luma3DS plugin is required to bridge local-wireless UDS traffic to Azahar's room transport.
+- Game compatibility varies. Local wireless, Download Play, and online services are separate cases.
+- No XAVRX app, plugin, or working gameplay connection is claimed yet.
 
-## Three-phase plan
+## Hardware target
+- Console: New Nintendo 2DS XL with Luma3DS.
+- Android: phone running Azahar.
 
-1. **Phase 1 — Feasibility and foundation**
-   - Document the 3DS local wireless protocol and Azahar networking interfaces.
-   - Identify what can be reused and what must be implemented.
-   - Define a minimal test case and a safe, testable architecture.
-   - Exit gate: demonstrate a technically credible path before claiming compatibility.
-2. **Phase 2 — Connection prototype**
-   - Implement the smallest end-to-end connection prototype supported by Phase 1 findings.
-   - Keep console, Android, and relay components separated where needed.
-3. **Phase 3 — Validation**
-   - Test with a specific supported game and hardware setup.
-   - Record reproducible results, limitations, and fixes.
-   - Do not claim a game works until a real test succeeds.
+## Project status
+**Phase 1 complete — Phase 2 is ready to begin.**
 
-## Important constraints
-
-- A network relay alone does not automatically translate Nintendo 3DS local wireless traffic into an emulator's networking protocol.
-- Game compatibility may vary; local multiplayer, Download Play, and online services are distinct cases.
-- No compatibility claims are made until verified on the physical console and Android device.
-- The project must not bypass Nintendo account protections or use copyrighted game files.
-
-## Current status
-
-**Phase 1: started — documentation and feasibility research.**
-
-Hardware target:
-- Console: New Nintendo 2DS XL, Luma3DS.
-- Android: Azahar.
-- Desired link: physical console ↔ Android emulator.
-
-## Repository structure (planned)
-
-```
-docs/
-  phase-1-feasibility.md
-console/
-android/
-relay/
-tests/
-```
-
-Implementation directories will be added only after Phase 1 establishes the required interfaces and protocol boundaries.
+See [Phase 1 technical findings](docs/phase-1-feasibility.md).
